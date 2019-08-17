@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private class ExampleAsyncTask extends AsyncTask<String, Bitmap, Bitmap> {
+    private static class ExampleAsyncTask extends AsyncTask<String, Bitmap, Bitmap> {
         private WeakReference<MainActivity> activityWeakReference;
 
         ExampleAsyncTask(MainActivity activity) {
@@ -60,41 +60,50 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            progressDialog = new ProgressDialog(MainActivity.this);
-            progressDialog.setMessage("Please wait..Image is downloading");
-            progressDialog.setIndeterminate(false);
-            progressDialog.show();
+            activity.progressDialog = new ProgressDialog(activity);
+            activity.progressDialog.setMessage("Please wait..Image is downloading");
+            activity.progressDialog.setIndeterminate(false);
+            activity.progressDialog.show();
 
         }
 
         @Override
         protected Bitmap doInBackground(String... strings) {
 
+            MainActivity activity = activityWeakReference.get();
+
 
             try {
-                ImageUrl = new URL("https://api.androidhive.info/json/movies/2.jpg");
+                activity.ImageUrl = new URL("https://api.androidhive.info/json/movies/2.jpg");
                 HttpURLConnection conn = (HttpURLConnection)
-                        ImageUrl.openConnection();
+                       activity.ImageUrl.openConnection();
                 conn.setDoInput(true);
                 conn.connect();
-                inputStream = conn.getInputStream();
+                activity.inputStream = conn.getInputStream();
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inPreferredConfig = Bitmap.Config.RGB_565;
-                bmImg = BitmapFactory.decodeStream(inputStream, null, options);
+                activity.bmImg = BitmapFactory.decodeStream(activity.inputStream, null, options);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return bmImg;
+            return activity.bmImg;
         }
 
         @Override
         protected void onPostExecute(Bitmap bitmap) {
             super.onPostExecute(bitmap);
-            if (imageView != null) {
-                progressDialog.hide();
-                imageView.setImageBitmap(bitmap);
+
+            MainActivity activity = activityWeakReference.get();
+            if (activity == null || activity.isFinishing()) {
+                return;
+            }
+
+
+            if (activity.imageView != null) {
+                activity.progressDialog.hide();
+                activity.imageView.setImageBitmap(bitmap);
             } else {
-                progressDialog.show();
+                activity.progressDialog.show();
             }
 
         }
